@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-center align-items-center" style="height: 80vh;">
+    <div class="card" style="width: 700px;">
+        <div class="card-header text-center">
+            <h2>New request</h2>
+        </div>
+        <div class="card-body">
+            <form id="uploadForm" action="{{ url_for('input_text') }}" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <input type="file" id="file1" accept=".txt" name="file1" class="form-control-file" hidden>
+                    <div class="dropzone default" id="fileDropzone1">
+                        <p class="text-center feedback" id="feedback1">Empty <strong>Text</strong>, drag/click to select one</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <input type="file" id="file2" accept=".txt" name="file2" class="form-control-file" hidden>
+                    <div class="dropzone default" id="fileDropzone2">
+                        <p class="text-center feedback" id="feedback2">Empty <strong>Dictionary</strong>, drag/click to select one</p>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Next</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropzone1 = document.getElementById("fileDropzone1");
+    const dropzone2 = document.getElementById("fileDropzone2");
+    const feedback1 = document.getElementById("feedback1");
+    const feedback2 = document.getElementById("feedback2");
+    const fileInput1 = document.getElementById("file1");
+    const fileInput2 = document.getElementById("file2");
+
+    function handleDropzoneClick(dropzone, fileInput, feedback) {
+        dropzone.addEventListener("click", () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener("change", () => {
+            if (fileInput.files.length > 0) {
+                const fileName = fileInput.files[0].name;
+                if (isValidFileType(fileName)) {
+                    feedback.innerHTML = "<strong>" + fileName + "</strong> loaded";
+                    dropzone.classList.remove("default", "error");
+                    dropzone.classList.add("success");
+                } else {
+                    feedback.innerHTML = "<strong>" + fileName + "</strong> not a .txt";
+                    dropzone.classList.remove("success");
+                    dropzone.classList.add("error");
+                    fileInput.value = "";  // Rimuove il file non valido
+                }
+            }
+        });
+    }
+
+    function handleFileDrop(dropzone, fileInput, feedback) {
+        dropzone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropzone.classList.add("dragover");
+        });
+
+        dropzone.addEventListener("dragleave", () => {
+            dropzone.classList.remove("dragover");
+        });
+
+        dropzone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropzone.classList.remove("dragover");
+
+            fileInput.files = e.dataTransfer.files;
+            const fileName = fileInput.files[0].name;
+
+            if (isValidFileType(fileName)) {
+                feedback.innerHTML = "<strong>" + fileName + "</strong> loaded";
+                dropzone.classList.remove("default", "error");
+                dropzone.classList.add("success");
+            } else {
+                feedback.innerHTML = "<strong>" + fileName + "</strong> not a .txt";
+                dropzone.classList.remove("success");
+                dropzone.classList.add("error");
+                fileInput.value = "";  // Rimuove il file non valido
+            }
+        });
+    }
+
+    function isValidFileType(filename) {
+        const extension = filename.split('.').pop().toLowerCase();
+        return extension === 'txt';
+    }
+
+    handleDropzoneClick(dropzone1, fileInput1, feedback1);
+    handleDropzoneClick(dropzone2, fileInput2, feedback2);
+    handleFileDrop(dropzone1, fileInput1, feedback1);
+    handleFileDrop(dropzone2, fileInput2, feedback2);
+</script>
+
+<style>
+    .dropzone {
+        border: 2px dashed #6c747c;
+        padding: 20px;
+        cursor: pointer;
+        transition: background 0.3s, border-color 0.3s;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+    }
+    .dropzone.default {
+        background-color: #ffeeba;  /* alert-warning */
+        border-color: #ffc107;  /* bordo alert-warning */
+        color: #856404;  /* colore testo alert-warning */
+    }
+    .dropzone.dragover {
+        background-color: #fff3cd;  /* tonalità chiara di alert-warning */
+        border-color: #ffeeba;
+    }
+    .dropzone.success {
+        background-color: #d4edda;  /* alert-success */
+        border-color: #28a745;  /* colore del bordo per alert-success */
+        color: #155724;  /* colore testo alert-success */
+    }
+    .dropzone.error {
+        background-color: #f8d7da;  /* alert-danger */
+        border-color: #dc3545;  /* colore del bordo per alert-danger */
+        color: #721c24;  /* colore testo alert-danger */
+    }
+    .dropzone:hover {
+        filter: brightness(90%);
+    }
+    .feedback {
+        margin: 0;
+    }
+    .card-body {
+        padding: 40px;
+    }
+</style>
+
+{% endblock %}

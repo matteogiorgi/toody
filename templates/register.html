@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="height: 80vh;">
+    <div class="card" style="width: 500px; padding: 20px;">
+        <div class="card-body">
+            <h1 class="text-center mb-4">Register</h1>
+            <form method="POST" action="/register">
+                <div class="form-group">
+                    <!-- <label for="username"><i class="fas fa-user"></i> Nome utente:</label> -->
+                    <input type="text" id="username" name="username" class="form-control rounded" placeholder="Username" required>
+                </div>
+                <div class="form-group">
+                    <!-- <label for="password"><i class="fas fa-lock"></i> Password:</label> -->
+                    <input type="password" id="password" name="password" class="form-control rounded" placeholder="Password" required>
+                </div>
+                <div class="form-group">
+                    <!-- <label for="confirm_password"><i class="fas fa-lock"></i> Conferma Password:</label> -->
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control rounded" placeholder="Confirm password" required>
+                </div>
+                <div class="text-center">
+                    <input type="submit" value="Next" class="btn btn-primary rounded">
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1336 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/keybinding-vim.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<div class="text-center mb-4">
+    <!-- <input type="text" id="requestName" class="form-control form-control-lg d-inline-block" placeholder="New request name" value="{{ request_name or '' }}" style="width: 100%; display: inline-block; font-size: 2rem; text-align: center;"> -->
+    <input type="text" id="requestName" class="form-control form-control-lg d-inline-block" placeholder="New request name" value="" style="width: 100%; display: inline-block; font-size: 2rem; text-align: center;">
+</div>
+
+<div class="mt-2">
+    <select id="keybindingSelect">
+        <option value="default">Default</option>
+        <option value="vim">Vim</option>
+    </select>
+    <label for="keybindingSelect"> keybindings</label>
+</div>
+
+<div class="row">
+    <!-- Colonna per il primo testo (75% della larghezza) -->
+    <div class="col-lg-9 position-relative">
+        <div class="form-group position-relative" style="margin-bottom: 0;">
+            <div id="aceEditor" style="height: 400px; width: 100%;">{{ content1 }}</div>
+            <input type="file" id="uploadFileAce" accept=".txt" style="display: none;" onchange="loadFileToAce(event)">
+            <!-- <button id="uploadButtonAce" class="btn btn-secondary btn-sm">+</button> -->
+            <button id="uploadButtonAce" class="btn btn-secondary btn-sm">Load text</button> <!-- Modifica qui -->
+        </div>
+    </div>
+
+    <!-- Colonna per il secondo testo (25% della larghezza) -->
+    <div class="col-lg-3 position-relative">
+        <div class="form-group position-relative" style="margin-bottom: 0;">
+            <textarea id="content2" rows="20" class="form-control" style="resize: none;" placeholder="Here goes the dictionary">{{ content2 }}</textarea>
+            <input type="file" id="uploadFileTextarea" accept=".txt" style="display: none;" onchange="loadFileToTextarea(event)">
+            <!-- <button id="uploadButtonTextarea" class="btn btn-secondary btn-sm">+</button> -->
+            <button id="uploadButtonTextarea" class="btn btn-secondary btn-sm">Load dictionary</button> <!-- Modifica qui -->
+        </div>
+        <!-- Bottone "Conta Parole" -->
+        <div class="text-center mt-2">
+            <button onclick="contaParole()" class="btn btn-primary w-100">Launch request</button>
+        </div>
+    </div>
+</div>
+
+<div id="results" class="mb-4" style="margin-top: 20px;">
+    <!-- Lexical Matches -->
+    {% if lexical_output %}
+    <div id="resizeHandlerLexical" class="resize-handler"></div>
+    <div class="card">
+        <div class="card-header collapsed-header" data-key="Lexical Matches" id="headingLexical" data-toggle="collapse" data-target="#collapseLexical" aria-expanded="true" aria-controls="collapseLexical" style="cursor: pointer;">
+            <h2><strong>{{ request_name }}</strong> &nbsp; Lexical Matches</h2>
+        </div>
+        <div id="collapseLexical" class="collapse" aria-labelledby="headingLexical">
+            <ul class="list-group list-group-flush">
+                {% for word, contexts in lexical_output.items() %}
+                    <li class="list-group-item list-group-item-action">
+                        <span>
+                            {{ word }}
+                            <span class="badge badge-primary">{{ contexts|length }}</span>
+                            <span class="fold-icon" data-toggle="collapse" data-target="#lexical-{{ word|slugify }}" aria-expanded="false" aria-controls="lexical-{{ word|slugify }}">▶</span>
+                        </span>
+                        <div class="collapse" id="lexical-{{ word|slugify }}">
+                            {% for context in contexts %}
+                                <div class="word-context">
+                                    <span class="line-number"><a href="javascript:void(0);" onclick="gotoLine({{ context.line }})">[ line {{ context.line }} ]</a></span><select class="tag-dropdown" data-type="lexical" data-word="{{ word }}" data-sentence="{{ context.sentence }}">
+                                        <option value="neutral" {% if context.tag == "neutral" %}selected{% endif %}>Neutral</option>
+                                        <option value="false_positive" {% if context.tag == "false_positive" %}selected{% endif %}>False Positive</option>
+                                        <option value="ambiguity" {% if context.tag == "ambiguity" %}selected{% endif %}>Ambiguity</option>
+                                        <option value="variability" {% if context.tag == "variability" %}selected{% endif %}>Variability</option>
+                                    </select>
+                                    {{ context.sentence|safe }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Passive Form Matches -->
+    {% if passive_output %}
+    <div style="height: 20px;"></div>
+    <div class="card">
+        <div class="card-header collapsed-header" data-key="Passive Form Matches" id="headingPassive" data-toggle="collapse" data-target="#collapsePassive" aria-expanded="true" aria-controls="collapsePassive" style="cursor: pointer;">
+            <h2><strong>{{ request_name }}</strong> &nbsp; Passive Form Matches</h2>
+        </div>
+        <div id="collapsePassive" class="collapse" aria-labelledby="headingPassive">
+            <ul class="list-group list-group-flush">
+                {% for verb, results in passive_output.items() %}
+                    <li class="list-group-item list-group-item-action">
+                        <span>
+                            {{ verb }}
+                            <span class="badge badge-primary">{{ results|length }}</span>
+                            <span class="fold-icon" data-toggle="collapse" data-target="#passive-{{ verb|slugify }}" aria-expanded="false" aria-controls="passive-{{ verb|slugify }}">▶</span>
+                        </span>
+                        <div class="collapse" id="passive-{{ verb|slugify }}">
+                            {% for result in results %}
+                                <div class="word-context">
+                                    <span class="line-number"><a href="javascript:void(0);" onclick="gotoLine({{ result.line }})">[ line {{ result.line }} ]</a></span><select class="tag-dropdown" data-type="passive" data-word="{{ verb }}" data-sentence="{{ result.sentence }}">
+                                        <option value="neutral" {% if result.tag == "neutral" %}selected{% endif %}>Neutral</option>
+                                        <option value="false_positive" {% if result.tag == "false_positive" %}selected{% endif %}>False Positive</option>
+                                        <option value="ambiguity" {% if result.tag == "ambiguity" %}selected{% endif %}>Ambiguity</option>
+                                        <option value="variability" {% if result.tag == "variability" %}selected{% endif %}>Variability</option>
+                                    </select>
+                                    {{ result.sentence|safe }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Verb Conjunction Matches -->
+    {% if verb_conjunction_output %}
+    <div style="height: 20px;"></div>
+    <div class="card">
+        <div class="card-header collapsed-header" data-key="Verb Conjunction Matches" id="headingVerbConj" data-toggle="collapse" data-target="#collapseVerbConj" aria-expanded="true" aria-controls="collapseVerbConj" style="cursor: pointer;">
+            <h2><strong>{{ request_name }}</strong> &nbsp; Verb Conjunction Matches</h2>
+        </div>
+        <div id="collapseVerbConj" class="collapse" aria-labelledby="headingVerbConj">
+            <ul class="list-group list-group-flush">
+                {% for verb, results in verb_conjunction_output.items() %}
+                    <li class="list-group-item list-group-item-action">
+                        <span>
+                            {{ verb }}
+                            <span class="badge badge-primary">{{ results|length }}</span>
+                            <span class="fold-icon" data-toggle="collapse" data-target="#verbconj-{{ verb|slugify }}" aria-expanded="false" aria-controls="verbconj-{{ verb|slugify }}">▶</span>
+                        </span>
+                        <div class="collapse" id="verbconj-{{ verb|slugify }}">
+                            {% for result in results %}
+                                <div class="word-context">
+                                    <span class="line-number"><a href="javascript:void(0);" onclick="gotoLine({{ result.line }})">[ line {{ result.line }} ]</a></span><select class="tag-dropdown" data-type="verbConjunction" data-word="{{ verb }}" data-sentence="{{ result.sentence }}">
+                                        <option value="neutral" {% if result.tag == "neutral" %}selected{% endif %}>Neutral</option>
+                                        <option value="false_positive" {% if result.tag == "false_positive" %}selected{% endif %}>False Positive</option>
+                                        <option value="ambiguity" {% if result.tag == "ambiguity" %}selected{% endif %}>Ambiguity</option>
+                                        <option value="variability" {% if result.tag == "variability" %}selected{% endif %}>Variability</option>
+                                    </select>
+                                    {{ result.sentence|safe }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Conjunction Sentence Matches -->
+    {% if conjunction_sentence_output %}
+    <div style="height: 20px;"></div>
+    <div class="card">
+        <div class="card-header collapsed-header" data-key="Conjunction Sentence Matches" id="headingConjSent" data-toggle="collapse" data-target="#collapseConjSent" aria-expanded="true" aria-controls="collapseConjSent" style="cursor: pointer;">
+            <h2><strong>{{ request_name }}</strong> &nbsp; Conjunction Sentence Matches</h2>
+        </div>
+        <div id="collapseConjSent" class="collapse" aria-labelledby="headingConjSent">
+            <ul class="list-group list-group-flush">
+                {% for sentence, results in conjunction_sentence_output.items() %}
+                    <li class="list-group-item list-group-item-action">
+                        <span>
+                            {{ sentence }}
+                            <span class="badge badge-primary">{{ results|length }}</span>
+                            <span class="fold-icon" data-toggle="collapse" data-target="#conjsent-{{ sentence|slugify }}" aria-expanded="false" aria-controls="conjsent-{{ sentence|slugify }}">▶</span>
+                        </span>
+                        <div class="collapse" id="conjsent-{{ sentence|slugify }}">
+                            {% for result in results %}
+                                <div class="word-context">
+                                    <span class="line-number"><a href="javascript:void(0);" onclick="gotoLine({{ result.line }})">[ line {{ result.line }} ]</a></span><select class="tag-dropdown" data-type="conjunctionSentence" data-word="{{ sentence }}" data-sentence="{{ result.sentence }}">
+                                        <option value="neutral" {% if result.tag == "neutral" %}selected{% endif %}>Neutral</option>
+                                        <option value="false_positive" {% if result.tag == "false_positive" %}selected{% endif %}>False Positive</option>
+                                        <option value="ambiguity" {% if result.tag == "ambiguity" %}selected{% endif %}>Ambiguity</option>
+                                        <option value="variability" {% if result.tag == "variability" %}selected{% endif %}>Variability</option>
+                                    </select>
+                                    {{ result.sentence|safe }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Per altezze di finestra molto piccole */
+    @media (max-height: 400px) {
+        #aceEditor, #content2 {
+            height: 150px;
+            min-height: 150px;
+        }
+    }
+    /* Per altezze di finestra medie */
+    @media (min-height: 401px) and (max-height: 800px) {
+        #aceEditor, #content2 {
+            height: 300px;
+            min-height: 300px;
+        }
+    }
+    /* Per altezze di finestra grandi */
+    @media (min-height: 801px) and (max-height: 1200px) {
+        #aceEditor, #content2 {
+            height: 500px;
+            min-height: 500px;
+        }
+    }
+    @media (min-height: 1201px) {
+        #aceEditor, #content2 {
+            height: 800px;
+            min-height: 800px;
+        }
+    }
+    textarea {
+        background-color: #f8f9fa !important; /* Colore di sfondo della navbar di Bootstrap */
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; !important; /* Font monospazio */
+    }
+    textarea::selection {
+        background-color: #b4d4ff;  /* This is a typical ACE editor selection color */
+    }
+    #aceEditor {
+        border: 1px solid #ced4da !important;
+        background-color: #f8f9fa; !important;
+        color: #495057; !important;
+        border-radius: 0.25rem; !important;
+    }
+    .ace_gutter-cell {
+        padding-left: 10px; !important;
+        padding-right: 5px; !important;
+        color: #495057 !important;
+    }
+    #aceEditor.focused {
+        border: 1px solid #80bdff !important;
+        outline: 0 !important;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25) !important;
+    }
+    .ace_emptyMessage {
+        color: #6c757d !important;  /* Questo è il colore tipico di un placeholder in Bootstrap */
+        position: absolute;
+        z-index: 1;
+        padding-left: 10px; /* Allinea con il primo rigo di Ace */
+        top: 10px; /* Distanza dall'inizio dell'editor */
+    }
+    #requestName {
+        background-color: #ffffff !important;
+        color: #3b88c3; /* Colore primary di Bootstrap */
+        border: 1px solid #3b88c3; /* Colore primary di Bootstrap */
+        box-shadow: none !important;
+        transition: box-shadow 0.3s ease-in-out; /* Transizione fluida quando l'input è focalizzato */
+    }
+    #requestName:focus {
+        outline: none !important; /* Rimuove il contorno predefinito del browser */
+        box-shadow: 0 0 0 0.2rem rgba(59, 136, 195, 0.25) !important; /* Aggiunge un'ombra "outline" del colore primary di Bootstrap */
+    }
+    #requestName::placeholder {
+        color: #3b88c3; /* Colore primary di Bootstrap */
+        opacity: 1; /* Firefox richiede questo per il colore del placeholder */
+    }
+    .word-context {
+        font-size: 0.8em;
+        color: #555;
+        margin-top: 5px;
+        display: block;
+        white-space: pre-line;
+        tab-size: 4;
+    }
+    .highlighted-word {
+        background-color: #ffff99; /* Colore di sfondo giallo chiaro */
+        font-weight: bold;
+    }
+    .line-number {
+        color: #888;
+        margin-right: 10px;
+        display: inline-block;
+        width: 70px;  /* O la larghezza desiderata */
+    }
+    #uploadButtonAce, #uploadButtonTextarea {
+        position: absolute;
+        bottom: 15px;  /* sposta il pulsante verso il basso */
+        right: 20px;
+        z-index: 1;
+        background-color: #e2e6ea; /* stesso colore di sfondo dell'editor Ace */
+        color: #495057; /* stesso colore del testo dell'editor Ace */
+        border: none;
+        width: auto;  /* (40px) */
+        height: auto;  /* (40px) */
+        padding: 10px 15px; /* Aggiustiamo il padding per fare spazio al testo */
+        border-radius: 20px;  /* rende il pulsante circolare (50%) */
+        font-size: 0.9rem;  /* Aumenta la dimensione del carattere (1.5rem) */
+        font-weight: bold;  /* o un valore numerico come 600 se desideri un controllo più fine */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: background-color 0.3s; /* transizione fluida per l'hover */
+    }
+    #uploadButtonAce:hover, #uploadButtonTextarea:hover {
+        background-color: #d1d5da;  /* un colore leggermente più scuro per l'hover */
+    }
+    /* Stile per il cambio di colore dei bottoni tondi */
+    #uploadButtonAce.success, #uploadButtonTextarea.success {
+        background-color: #b3dcb7;  /* alert-success */
+        border-color: #28a745;  /* colore del bordo per alert-success */
+        color: #155724;  /* colore testo alert-success */
+    }
+    #uploadButtonAce.error, #uploadButtonTextarea.error {
+        background-color: #e6b0b4;  /* alert-danger */
+        border-color: #dc3545;  /* colore del bordo per alert-danger */
+        color: #721c24;  /* colore testo alert-danger */
+    }
+    .resize-handler {
+        height: 5px;
+        width: 20%;  /* definisce la lunghezza del separatore al 50% della sua contenitore */
+        margin: 20px auto;  /* centrato orizzontalmente */
+        background: linear-gradient(to right, #ddd, #999, #ddd);
+        border-radius: 5px;  /* arrotonda gli angoli per un aspetto più morbido */
+        pointer-events: none;
+    }
+    .list-group-item-action:hover, .list-group-item-action:active {
+        background-color: #f8f9fa;  /* Ad esempio, questo è il colore di default dell'hover in Bootstrap. */
+        border-color: rgba(0,0,0,.125);  /* Questo è il colore del bordo dell'hover in Bootstrap. */
+    }
+    .collapsed-header {
+        border-bottom: none !important;
+        background-color: #3b88c3 !important; /* Colore blu di Bootstrap */
+        color: white !important; /* Colore del testo bianco per contrastare con lo sfondo blu */
+        border-bottom-left-radius: 0.25rem !important;
+        border-bottom-right-radius: 0.25rem !important;
+    }
+    .collapsed-header:hover {
+        background-color: #2a6b9b !important; /* Un blu leggermente più scuro di #3b88c3 */
+    }
+    .fold-icon {
+        cursor: pointer;
+        float: right;
+        margin-left: 10px;
+        transition: transform 0.3s;
+    }
+    .fold-icon.expanded {
+        transform: rotate(90deg);
+    }
+    .tag-dropdown {
+        margin-top: 5px;
+        margin-right: 10px;
+        font-size: 0.9em;
+    }
+    .word-context {
+    }
+</style>
+
+<script>
+    document.getElementById("uploadButtonAce").addEventListener("click", function() {
+        document.getElementById("uploadFileAce").click();
+    });
+
+    document.getElementById("uploadButtonTextarea").addEventListener("click", function() {
+        document.getElementById("uploadFileTextarea").click();
+    });
+
+    function isValidFileType(filename) {
+        const extension = filename.split('.').pop().toLowerCase();
+        return extension === 'txt';
+    }
+
+    function loadFileToAce(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (isValidFileType(file.name)) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                editor.setValue(content);
+
+                // Pulisci la selezione e posiziona il cursore all'inizio
+                editor.selection.clearSelection();
+                editor.gotoLine(0, 0);
+            }
+            reader.readAsText(file);
+
+            // Resetta lo stile del pulsante se il file è valido
+            document.getElementById("uploadButtonAce").classList.remove("error");
+            document.getElementById("uploadButtonAce").classList.add("success");
+        } else {
+            // Mostra un errore e modifica lo stile del pulsante
+            document.getElementById("uploadButtonAce").classList.add("error");
+            event.target.value = "";  // Rimuove il file non valido
+        }
+
+        // Dopo aver cambiato il colore del bottone...
+        setTimeout(function() {
+            document.getElementById("uploadButtonAce").classList.remove("success", "error");
+        }, 3000);
+
+        event.target.value = null;
+    }
+
+    function loadFileToTextarea(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (isValidFileType(file.name)) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const textarea = document.getElementById("content2");
+                textarea.value = content;
+                textarea.selectionStart = 0;
+                textarea.selectionEnd = 0;
+            }
+            reader.readAsText(file);
+
+            // Reset the button style if the file is valid
+            document.getElementById("uploadButtonTextarea").classList.remove("error");
+            document.getElementById("uploadButtonTextarea").classList.add("success");
+        } else {
+            // Show an error and change the button style
+            document.getElementById("uploadButtonTextarea").classList.add("error");
+            event.target.value = "";  // Remove the invalid file
+        }
+
+        // After changing the button color...
+        setTimeout(function() {
+            document.getElementById("uploadButtonTextarea").classList.remove("success", "error");
+        }, 3000);
+
+        event.target.value = null;
+    }
+</script>
+
+<script>
+    // Se c'è un output (stai visualizzando una vecchia richiesta),
+    // reimposta il campo di input del "Nome della richiesta"
+    {% if output %}
+        window.onload = function() {
+            document.getElementById("requestName").value = "";
+        }
+    {% endif %}
+
+    // Sincronizza l'altezza di Ace Editor con quella della textarea
+    window.addEventListener("resize", function() {
+        syncAceEditorHeight();
+    });
+
+    function syncAceEditorHeight() {
+        const aceEditorDiv = document.getElementById("aceEditor");
+        const content2 = document.getElementById("content2");
+        const buttonHeight = document.querySelector(".btn-primary.w-100").offsetHeight;
+        const buttonMargin = 8; // Assumendo che ci siano margini (ad esempio, 16px). Se non ci sono margini, imposta questo valore a 0.
+
+        aceEditorDiv.style.height = (content2.offsetHeight + buttonHeight + buttonMargin) + "px";
+        editor.resize();  // Forza il ridimensionamento dell'editor Ace
+    }
+</script>
+
+<script>
+    function contaParole() {
+        console.log("Inizio funzione contaParole");
+        console.log(memory)
+        var content1 = editor.getValue();
+        var content2 = document.getElementById("content2").value;
+        var requestName = document.getElementById("requestName").value;
+
+        if (!content1 || !content2 || !requestName) {
+            $('#incompleteFieldsModal').modal('show');
+            return;
+        }
+
+        fetch('/conta-parole', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // Aggiungi memory al corpo della richiesta
+            body: JSON.stringify({
+                'content1': content1,
+                'content2': content2,
+                'requestName': requestName,
+                'memory': memory
+            }),
+        })
+        // .then(response => response.json())
+        .then(response => {
+            console.log("Risposta dal server");
+            return response.json();
+        })
+        .then(data => {
+            console.log("Dati ricevuti");
+            console.log(data);
+            var resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';  // Pulisci prima i vecchi risultati
+
+            // Separatore iniziale
+            var initialSeparator = document.createElement('div');
+            initialSeparator.className = "resize-handler";
+            resultsDiv.appendChild(initialSeparator);
+
+            // Gestione dei risultati lessicali
+            if (data.lexical_results && Object.keys(data.lexical_results.results).length) {
+                console.log("CHECKMARK");
+                let lexicalCard = createResultCard(requestName, data.lexical_results.results, "lexical");
+                resultsDiv.appendChild(lexicalCard);
+            }
+
+            // Gestione dei risultati in forma passiva
+            if (data.passive_form_results && Object.keys(data.passive_form_results.results).length) {
+                let passiveCard = createResultCard(requestName, data.passive_form_results.results, "passive");
+                resultsDiv.appendChild(passiveCard);
+            }
+
+            // Gestione dei risultati delle congiunzioni verbali
+            if (data.verb_conjunction_results && Object.keys(data.verb_conjunction_results.results).length) {
+                let verbConjunctionCard = createResultCard(requestName, data.verb_conjunction_results.results, "verbConjunction");
+                resultsDiv.appendChild(verbConjunctionCard);
+            }
+
+            // Gestione dei risultati delle frasi congiuntive
+            if (data.conjunction_sentence_results && Object.keys(data.conjunction_sentence_results.results).length) {
+                let conjunctionSentenceCard = createResultCard(requestName, data.conjunction_sentence_results.results, "conjunctionSentence");
+                resultsDiv.appendChild(conjunctionSentenceCard);
+            }
+
+            document.getElementById("requestName").value = "";
+        });
+    }
+
+    function slugify(text) {
+        return text.toString().toLowerCase()
+            .replace(/\s+/g, '-')           // Sostituisci gli spazi con -
+            .replace(/[^\w\-]+/g, '')       // Rimuovi tutti i caratteri non alfanumerici
+            .replace(/\-\-+/g, '-')         // Sostituisci le sequenze multiple di - con un singolo -
+            .replace(/^-+/, '')             // Trim - dall'inizio
+            .replace(/-+$/, '');            // Trim - dalla fine
+    }
+
+    function createResultCard(requestName, results, type) {
+        console.log("Inizio creazione card");
+        var resultDiv = document.createElement('div');
+        resultDiv.className = "card";
+        resultDiv.style.marginTop = "20px";
+
+        const typeNames = {
+            "lexical": "Lexical Matches",
+            "passive": "Passive Form Matches",
+            "verbConjunction": "Verb Conjunction Matches",
+            "conjunctionSentence": "Conjunction Sentence Matches",
+        };
+
+        var matchType = typeNames[type] || "Unknown Type";
+
+        // Unique ID for the collapse content
+        const collapseId = `collapse${type}`;
+        const headingId = `heading${type}`;
+
+        // Card header with collapse trigger
+        var headerDiv = document.createElement('div');
+        headerDiv.className = "card-header collapsed-header";
+        headerDiv.id = headingId;
+        headerDiv.setAttribute("data-toggle", "collapse");
+        headerDiv.setAttribute("data-target", `#${collapseId}`);
+        headerDiv.setAttribute("aria-expanded", "true");
+        headerDiv.setAttribute("aria-controls", collapseId);
+        headerDiv.style.cursor = "pointer";
+        headerDiv.innerHTML = `<h2><strong>${requestName}</strong> &nbsp; ${matchType}</h2>`;
+        resultDiv.appendChild(headerDiv);
+
+        // Collapse content
+        var collapseDiv = document.createElement('div');
+        collapseDiv.className = "collapse";
+        collapseDiv.id = collapseId;
+        collapseDiv.setAttribute("aria-labelledby", headingId);
+
+        var listGroup = document.createElement('ul');
+        listGroup.className = "list-group list-group-flush";
+
+        const createListItem = (key, resultsArray) => {
+            const listItem = document.createElement('li');
+            listItem.className = "list-group-item list-group-item-action";
+
+            // Unique ID for the word's context
+            const contextId = `${type}-${slugify(key)}-context`;
+
+            function escapeHtml(unsafe) {
+                return unsafe
+                     .replace(/&/g, "&amp;")
+                     .replace(/</g, "&lt;")
+                     .replace(/>/g, "&gt;")
+                     .replace(/"/g, "&quot;")
+                     .replace(/'/g, "&#039;");
+            }
+
+            let contextString = '';
+            resultsArray.forEach(result => {
+                // Genera le opzioni con l'attributo 'selected' appropriato
+                let optionsHtml = `
+                    <option value="neutral" ${result.tag == "neutral" ? "selected" : ""}>Neutral</option>
+                    <option value="false_positive" ${result.tag == "false_positive" ? "selected" : ""}>False Positive</option>
+                    <option value="ambiguity" ${result.tag == "ambiguity" ? "selected" : ""}>Ambiguity</option>
+                    <option value="variability" ${result.tag == "variability" ? "selected" : ""}>Variability</option>
+                `;
+
+                contextString += `
+                    <div class="word-context">
+                        <span class="line-number"><a href="javascript:void(0);" onclick="gotoLine(${result.line})">[ line ${result.line} ]</a></span><select class="tag-dropdown" data-type="${type}" data-word="${escapeHtml(key)}" data-sentence="${escapeHtml(result.sentence)}">
+                            ${optionsHtml}
+                        </select>
+                        ${result.sentence}
+                    </div>`;
+            });
+
+            // Append the word and badge to the list item
+            listItem.innerHTML = `<span>${key} <span class="badge badge-primary">${resultsArray.length}</span></span>`;
+
+            // Append the folding arrow
+            const foldIcon = document.createElement('span');
+            foldIcon.className = "fold-icon";
+            foldIcon.setAttribute("data-toggle", "collapse");
+            foldIcon.setAttribute("data-target", `#${contextId}`);
+            foldIcon.setAttribute("aria-expanded", "false");
+            foldIcon.setAttribute("aria-controls", contextId);
+            foldIcon.innerHTML = '▶';
+            foldIcon.addEventListener('click', function() {
+                if (foldIcon.classList.contains('expanded')) {
+                    foldIcon.classList.remove('expanded');
+                } else {
+                    foldIcon.classList.add('expanded');
+                }
+            });
+            listItem.appendChild(foldIcon);
+
+            // Append the context to the list item
+            const contextDiv = document.createElement('div');
+            contextDiv.id = contextId;
+            contextDiv.className = 'collapse';
+            contextDiv.innerHTML = contextString;
+            listItem.appendChild(contextDiv);
+
+            return listItem;
+        }
+
+        for (let key in results) {
+            listGroup.appendChild(createListItem(key, results[key]));
+        }
+
+        collapseDiv.appendChild(listGroup);
+        resultDiv.appendChild(collapseDiv);
+        console.log("Fine creazione card");
+        return resultDiv;
+    }
+</script>
+
+<script>
+    var editor = ace.edit("aceEditor");
+
+    // Impedisce di scorrere oltre i limiti dell'editor Ace (Chrome)
+    editor.container.addEventListener("mousewheel", function(e) {
+        var scrollTop = editor.renderer.scrollTop;
+        var maxScrollTop = editor.renderer.layerConfig.maxHeight - editor.renderer.$size.scrollerHeight;
+
+        if (e.deltaY < 0 && scrollTop <= 0) {
+            // sta cercando di scorrere verso l'alto ma è già in cima
+            e.preventDefault();
+        } else if (e.deltaY > 0 && scrollTop >= maxScrollTop) {
+            // sta cercando di scorrere verso il basso ma è già in fondo
+            e.preventDefault();
+        }
+    });
+
+    // Impedisce di scorrere oltre i limiti dell'editor Ace (Firefox)
+    editor.container.addEventListener("DOMMouseScroll", function(e) {
+        var scrollTop = editor.renderer.scrollTop;
+        var maxScrollTop = editor.renderer.layerConfig.maxHeight - editor.renderer.$size.scrollerHeight;
+
+        if (e.detail < 0 && scrollTop <= 0) {
+            // sta cercando di scorrere verso l'alto ma è già in cima
+            e.preventDefault();
+        } else if (e.detail > 0 && scrollTop >= maxScrollTop) {
+            // sta cercando di scorrere verso il basso ma è già in fondo
+            e.preventDefault();
+        }
+    });
+
+    editor.setTheme("ace/theme/textmate"); // Usa il tema textmate
+    editor.session.setMode("ace/mode/text");
+    editor.session.setUseWrapMode(true);
+    editor.setShowPrintMargin(false);
+    editor.renderer.setShowGutter(true);  // per mostrare i numeri di riga
+    editor.setHighlightActiveLine(false);
+    editor.renderer.setPadding(10);  // Imposta un padding di 10px
+    editor.renderer.setScrollMargin(10, 10);  // Imposta un margine di scorrimento di 10px su entrambi i lati
+    editor.setOptions({
+        fontFamily: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace", // Font simile alla textarea
+        fontSize: "12pt",  // Dimensione del font simile alla textarea
+        vScrollBarAlwaysVisible: false,  // Mostra sempre la barra di scorrimento verticale
+    });
+    editor.getSession().setUseSoftTabs(false);  // Usa il vero carattere tab invece degli spazi
+    editor.getSession().setTabSize(4);  // Imposta la dimensione del tab a 4 spazi (opzionale, puoi impostare qualsiasi numero tu preferisca)
+
+    syncAceEditorHeight();
+
+    // Placeholder per Ace Editor
+    function updateAceEditorPlaceholder() {
+        var shouldShow = !editor.getSession().getValue().length;
+        var node = editor.renderer.emptyMessageNode;
+        if (!shouldShow && node) {
+            editor.renderer.scroller.removeChild(editor.renderer.emptyMessageNode);
+            editor.renderer.emptyMessageNode = null;
+        } else if (shouldShow && !node) {
+            node = editor.renderer.emptyMessageNode = document.createElement("div");
+            node.textContent = "Here goes your requirements specification text"; // Testo del placeholder
+            node.className = "ace_invisible ace_emptyMessage";
+            editor.renderer.scroller.appendChild(node);
+        }
+    }
+
+    editor.on("input", updateAceEditorPlaceholder);
+    setTimeout(updateAceEditorPlaceholder, 100); // Aggiorna il placeholder all'inizio
+
+    editor.on("focus", function() {
+        document.getElementById("aceEditor").classList.add("focused");
+    });
+    editor.on("blur", function() {
+        document.getElementById("aceEditor").classList.remove("focused");
+    });
+
+    document.getElementById("keybindingSelect").addEventListener("change", function() {
+        var selectedKeybinding = this.value;
+        switch(selectedKeybinding) {
+            case 'vim':
+                editor.setKeyboardHandler("ace/keyboard/vim");
+                break;
+            default:
+                editor.setKeyboardHandler("");
+                break;
+        }
+    });
+
+    function gotoLine(lineNumber) {
+        // Sposta il cursore nell'editor ACE alla riga specificata
+        var editor = ace.edit("aceEditor");
+        editor.scrollToLine(lineNumber, true, true, function() {});
+        editor.gotoLine(lineNumber);
+
+        // Esegui lo scroll della pagina per visualizzare l'editor ACE
+        var aceContainerOffset = $("#aceEditor").offset().top;
+        console.log("Trying to scroll to:", aceContainerOffset); // Debug log
+        window.scrollTo({
+            top: aceContainerOffset - 100,  // -100 per dare un po' di spazio sopra
+            behavior: 'smooth'
+        });
+    }
+</script>
+
+<script>
+    document.getElementById("content2").addEventListener('wheel', function(e) {
+        var textarea = document.getElementById("content2");
+        if (e.deltaY < 0 && textarea.scrollTop === 0) {
+            // sta cercando di scorrere verso l'alto ma è già in cima
+            e.preventDefault();
+        } else if (e.deltaY > 0 && textarea.scrollHeight - textarea.clientHeight - textarea.scrollTop <= 0) {
+            // sta cercando di scorrere verso il basso ma è già in fondo
+            e.preventDefault();
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const foldIcons = document.querySelectorAll('.fold-icon');
+        foldIcons.forEach(icon => {
+            icon.addEventListener('click', function() {
+                if (this.getAttribute('aria-expanded') === 'true') {
+                    this.classList.remove('expanded');
+                    this.setAttribute('aria-expanded', 'false');
+                } else {
+                    this.classList.add('expanded');
+                    this.setAttribute('aria-expanded', 'true');
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+    // Inizializza la struttura "memory" solo se non già presente
+    var memory = {{ memory|default({"lexical": {}, "passive": {}, "verbConjunction": {}, "conjunctionSentence": {}})|tojson|safe }};
+
+    $(document).ready(function() {
+        // Aggiungi un event listener al body per l'event delegation
+        $('body').on('change', '.tag-dropdown', function() {
+            // Recupera la "sentence" originale associata a questa tendina
+            var sentence = $(this).data('sentence');
+            var type = $(this).data('type');
+            var word = $(this).data('word');
+            var selectedValue = $(this).val();
+
+            console.log("Sentence: " + sentence);
+
+            // Aggiungi la "sentence" a "memory"
+            if (!memory[type][word]) {
+                memory[type][word] = {
+                    "false_positive": [],
+                    "ambiguity": [],
+                    "variability": []
+                };
+            }
+
+            // Rimuovi la frase da tutti gli array, indipendentemente dalla sua presenza
+            for (var tag in memory[type][word]) {
+                var index = memory[type][word][tag].indexOf(sentence);
+                if (index !== -1) {
+                    memory[type][word][tag].splice(index, 1);
+                }
+            }
+
+            // ["false_positive", "ambiguity", "variability"].forEach(tag => {
+            //     var index = memory[type][word][tag].indexOf(sentence);
+            //     if (index !== -1) {
+            //         memory[type][word][tag].splice(index, 1);
+            //     }
+            // });
+
+            // Aggiungi la frase all'array selezionato, a meno che l'opzione non sia "neutral"
+            if (selectedValue !== "neutral") {
+                memory[type][word][selectedValue].push(sentence);
+            }
+
+            console.log(memory);
+        });
+    });
+</script>
+
+<!-- INIZIO DEL NUOVO CODICE -->
+{% if not lexical_output and not passive_output %}
+    <script>
+        window.onload = function() {
+            if (!document.getElementById("content2").value) {
+                document.getElementById("content2").value = `### DISJ
+Or
+And/Or
+Or/And
+
+### OPTIONALITY
+Eventually
+Optionally
+Possibly
+Probably
+
+### VAGUENESS
+Abundant
+Acceptable
+Accordant
+Accurate
+Accurately
+Actual
+Adaptable
+Adequate
+Adequately
+Adjacent
+Advantageous
+Affordable
+Agile
+Agreeable
+Ambitious
+Ambivalent
+Ample
+And So On
+Annoying
+Apparent
+Apposite
+Appreciable
+Appropriate
+Appropriately
+Approximate
+Approximately
+Apropos
+Apt
+Arduous
+Abstruse
+Abstrusely
+As Required
+Bad
+Badly
+Baffled
+Beautiful
+Befitting
+Boring
+Bothersome
+Brief
+Briefly
+Broad
+Broadly
+Businesslike
+Capable
+Capacious
+Careful
+Catchy
+Certain
+Challenging
+Cheap
+Clean
+Clear
+Clearly
+Closely
+Coarse-Grained
+Coarse Grained
+Coherent
+Colossal
+Comfortable
+Comfy
+Competent
+Complex
+Complicated
+Concise
+Concisely
+Concordant
+Confident
+Conformable
+Confused
+Congenial
+Congruent
+Congruous
+Considerable
+Consonant
+Conspicuous
+Cost-Effective
+Cost Effective
+Cost-Efficient
+Cost Efficient
+Counterfeit
+Counterintuitive
+Crucial
+Cryptic
+Cushy
+Decent
+Deep
+Deeply
+Deficient
+Delicate
+Delicately
+Demanding
+Dependable
+Desirable
+Detailed
+Detective
+Difficult
+Dirty
+Disagreeable
+Discordant
+Disfigured
+Dishy
+Disordered
+Disorganised
+Disorganized
+Displeasing
+Distant
+Doubtful
+Easily
+Easy
+Easygoing
+Economic
+Effective
+Effectively
+Effectual
+Efficacious
+Efficient
+Efficiently
+Effortful
+Effortless
+Elaborated
+Elegant
+Elementary
+Eligible
+Enough
+Etc.
+Evident
+Expedient
+Expeditious
+Expensive
+Explicable
+Extended
+Extensive
+Extraordinary
+Fair
+Fair To Middling
+Fancy
+Fashionable
+Fast
+Fine
+Fine-Grained
+Fine Grained
+Finely
+Fit
+Flexible
+Fluent
+Frail
+Fresh
+Fruitful
+Full-Size
+Full Size
+Fundamental
+Futile
+Fuzzy
+Galling
+General
+Gentle
+Genuine
+Giant
+Good
+Goodish
+Gross
+Hands-Down
+Hands Down
+Hard
+Hard-Fought
+Hard Fought
+Hard-Hitting
+Hard Hitting
+Hardly
+Harmonious
+Harsh
+Heavy
+Helpful
+Hostile
+Illegible
+Immediate
+Imminent
+Impartial
+Imperfect
+Impertinent
+Impolite
+Important
+Impractical
+Impressive
+Improper
+Impure
+Inaccurate
+Inaccurately
+Inadequate
+Inadequately
+Inappropriate
+Inappropriately
+Incapable
+Incoherent
+Incompetent
+Incomprehensible
+Incongruous
+Inconsiderable
+Inconsiderably
+Inconsiderately
+Inconspicuous
+Indisputable
+Indisputably
+Ineffective
+Ineffectively
+Ineffectual
+Inefficacious
+Inefficient
+Ineligible
+Inexpedient
+Inexpensive
+Inexplicable
+Insecure
+Insecurely
+Insignificant
+Insufficient
+Intense
+Interesting
+Intimately
+Intuitive
+Irrational
+Irrelevant
+Irritating
+Just About
+Large
+Legible
+Light
+Limpid
+Logical
+Long
+Loud
+Major
+Malapropos
+Manifest
+Massive
+Meager
+Meaningful
+Meaningless
+Mediocre
+Middling
+Mild
+Minor
+Moderate
+Naive
+Narrow
+Nasty
+Near
+Nearly
+Neat
+Nerve-Racking
+Nerve Racking
+Nerve-Wracking
+Nerve Wracking
+Nettlesome
+Nice
+Nifty
+Nonspecific
+Noteworthy
+Obvious
+Of Import
+Of Value
+Ordinary
+Organized
+Obscure
+Outsize
+Outsized
+Overlarge
+Oversize
+Oversized
+Painless
+Passable
+Pat
+Perfect
+Pertinent
+Pesky
+Plaguy
+Plain
+Pleasant
+Pleasing
+Pleasureful
+Polite
+Poor
+Possible
+Practical
+Precarious
+Precise
+Pretty
+Problematic
+Prolix
+Prominent
+Promptly
+Proper
+Properly
+Pure
+Qualified
+Quick
+Rapid
+Rational
+Raw
+Reasonable
+Recent
+Recondite
+Relevant
+Reliable
+Remarkable
+Repulsive
+Respectable
+Rich
+Risky
+Robust
+Rough
+Rough-And-Ready
+Rough And Ready
+Roughly
+Sane
+Sapless
+Satisfactory
+Scanty
+Scarce
+Seamless
+Serious
+Seriously
+Several
+Sharp
+Short
+Short-Handed
+Short Handed
+Shortly
+Short-Staffed
+Short Staffed
+Sightly
+Significant
+Silly
+Simple
+Simplified
+Simplistic
+Simply
+Slim
+Slow
+Slowly
+Slow-Moving
+Slow Moving
+Small-Scale
+Small Scale
+Smart
+Smashing
+Smooth
+Smooth
+Smutty
+Solid
+Some
+Sophisticated
+Sound
+Spacious
+Sparse
+Specific
+Speculative
+Speedy
+Spontaneous
+Strange
+Stressful
+Strong
+Substantial
+Sufficient
+Suitable
+Suited
+Superb
+Superficial
+Swell
+Synthetic
+Teasing
+Tedious
+Thick
+Thin
+Tight
+Timesaving
+Tiny
+To The Point
+Today's
+Trenchant
+Trenchantly
+Tricky
+Trivial
+Troublesome
+Unadaptable
+Unbefitting
+Unclear
+Uncollectible
+Uncomfortable
+Uncomplicated
+Undemanding
+Undependable
+Undermanned
+Underspent
+Understaffed
+Uneasy
+Uneffective
+Uneffectively
+Unfair
+Unfit
+Unfruitful
+Unhelpful
+Unimportant
+Uninteresting
+Unmistakable
+Unnatural
+Unpleasant
+Unqualified
+Unreliable
+Unsatisfactory
+Unserviceable
+Unsound
+Unstable
+Unsubtle
+Unsuitable
+Unsure
+Unsweet
+Unusable
+Unuseable
+Usable
+Useable
+Useful
+Useless
+User-Friendly
+User Friendly
+Utile
+Utilizable
+Valuable
+Various
+Vast
+Versatile
+Vexatious
+Vexing
+Virtually
+Voluminous
+Wasteful
+Weakly
+Well Behaved
+Well Known
+Well-Known
+Well-Behaved
+Well Behaved
+Well-Founded
+Well Founded
+Wide
+Widely
+Worthy
+
+### WEAKNESS
+Can
+Could
+May
+Might
+Would`;
+            }
+        }
+    </script>
+{% endif %}
+<!-- FINE DEL NUOVO CODICE -->
+
+<div class="modal fade" id="incompleteFieldsModal" tabindex="-1" role="dialog" aria-labelledby="incompleteFieldsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="incompleteFieldsModalLabel">Incomplete Fields</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Please fill out all fields before submitting.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

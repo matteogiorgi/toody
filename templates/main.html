@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if current_user.is_authenticated %}
+    {% if user_requests %}
+    <div class="text-center mb-4">
+        <a href="{{ url_for('input_text') }}" class="btn btn-primary display-4" style="width: 50%; display: inline-block; font-size: 2rem; text-align: center;">New request</a>
+    </div>
+    <table class="table table-striped w-100">
+        <!-- hello -->
+        <thead>
+            <tr>
+                <th class="clickable text-center col-request" onclick="sortTable('name')">Request
+                    {% if order == 'name_asc' %}
+                        <i class="bi bi-arrow-down-short"></i>
+                    {% elif order == 'name_desc' %}
+                        <i class="bi bi-arrow-up-short"></i>
+                    {% else %}
+                        <i class="bi bi-arrow-up-down"></i>
+                    {% endif %}
+                </th>
+                <th class="clickable text-center col-date" onclick="sortTable('date')">Date
+                    {% if order == 'date_asc' %}
+                        <i class="bi bi-arrow-down-short"></i>
+                    {% elif order == 'date_desc' %}
+                        <i class="bi bi-arrow-up-short"></i>
+                    {% else %}
+                        <i class="bi bi-arrow-up-down"></i>
+                    {% endif %}
+                </th>
+                <th class="text-center col-actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in user_requests|reverse %}
+                <tr>
+                    <!-- <td class="text-center col-request"><a href="{{ url_for('view_request', request_id=request.id) }}">{{ request.request_name }}</a></td> -->
+                    <!-- <td class="text-center col-request"> -->
+                    <!--     <a href="{{ url_for('view_request', request_id=request.id) }}" class="btn btn-light btn-request">{{ request.request_name }}</a> -->
+                    <!-- </td> -->
+                    <td class="text-center col-request">
+                        <!-- <a href="{{ url_for('view_request', request_id=request.id) }}" class="btn btn-secondary btn-request">{{ request.request_name }}</a> -->
+                        <!-- <a href="{{ url_for('view_request', request_id=request.id) }}" class="btn btn-primary btn-request">{{ request.request_name }}</a> -->
+                        <a href="{{ url_for('view_request', request_id=request.id) }}" class="btn btn-outline-primary btn-request">{{ request.request_name }}</a>
+                    </td>
+                    <td class="text-center col-date">{{ request.timestamp.strftime('%d %b %Y - %H:%M') }}</td>
+                    <td class="text-center col-actions">
+                    <!-- I bottoni per le azioni -->
+                    <button class="btn btn-warning btn-sm" onclick="showRenameModal('{{ request.id }}', '{{ request.request_name }}')">Rename</button>
+                    <a href="{{ url_for('download_request', request_id=request.id) }}" class="btn btn-info btn-sm">Download</a>
+                    <button class="btn btn-danger btn-sm" onclick="showDeleteModal('{{ url_for('delete_request', request_id=request.id) }}')">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="d-flex justify-content-center align-items-center flex-column" style="height: 80vh;">
+        <div class="text-center mt-5">
+            <a href="{{ url_for('input_text') }}" class="btn btn-primary display-4" style="width: 100%; display: inline-block; font-size: 2rem; text-align: center;">New request</a>
+            <h2 class="mt-4">Welcome <strong>{{ current_user.username }}</strong>, launch your first request!</h2>
+            <!-- <h2 class="mt-4">Requests yet to be launched</h2> -->
+            <p class="lead">Your requests list is empty.</p>
+        </div>
+    </div>
+    {% endif %}
+{% else %}
+    {# Contenuto della landing_page.html #}
+    <div class="d-flex justify-content-center align-items-center flex-column" style="height: 80vh;">
+        <div class="text-center mt-5">
+            <h1 class="mt-4" style="font-size: 5rem;">
+                Welcome to <img src="{{ url_for('static', filename='toody-blue.svg') }}" alt="TooDY Logo" style="height: 1.2em; vertical-align: middle; margin-bottom: 0.2em; margin-right: 0.1em;">ooDY
+            </h1>
+            <p class="lead" style="font-size: 2rem;">Your quick variability checker.</p>
+        </div>
+    </div>
+{% endif %}
+
+<style>
+    .clickable {
+        cursor: pointer;
+        text-decoration: underline;
+    }
+    .col-request {
+        width: 40%;
+        max-width: 40%;
+        min-width: 40%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .col-date {
+        width: 20%;
+        max-width: 20%;
+        min-width: 20%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .col-actions {
+        width: 40%;
+        max-width: 40%;
+        min-width: 40%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .btn-request {
+        width: 60%; /* Imposta la larghezza al 80% della colonna */
+        text-align: center; /* Centra il testo all'interno del bottone */
+        display: block; /* Rende l'elemento a un blocco, così prende tutta la larghezza disponibile */
+        margin: 0 auto; /* Centra il bottone nella colonna */
+        white-space: normal; /* Permette al testo di andare a capo */
+        word-wrap: break-word;
+        min-width: 100px; /* o qualsiasi altra dimensione tu ritenga appropriata */
+    }
+</style>
+
+<script>
+    function showDeleteModal(deleteUrl) {
+        // Set the action attribute for the form in the modal
+        document.getElementById('deleteRequestForm').action = deleteUrl;
+        // Show the modal
+        $('#deleteRequestModal').modal('show');
+    }
+
+    function showRenameModal(requestId, currentName) {
+        // Setta l'ID della richiesta nel campo nascosto del form nel modale
+        document.getElementById('renameRequestId').value = requestId;
+
+        // Setta il nome attuale della richiesta nel campo di input
+        document.getElementById('newRequestName').value = currentName;
+
+        // Mostra il modale
+        $('#renameRequestModal').modal('show');
+    }
+
+    function sortTable(column) {
+        let currentOrder = "{{ order }}";
+        let newOrder = "";
+
+        if (column === "name") {
+            newOrder = (currentOrder === "name_asc") ? "name_desc" : "name_asc";
+        } else if (column === "date") {
+            newOrder = (currentOrder === "date_asc") ? "date_desc" : "date_asc";
+        }
+
+        window.location.href = "/" + newOrder;
+    }
+</script>
+
+<div class="modal fade" id="deleteRequestModal" tabindex="-1" role="dialog" aria-labelledby="deleteRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteRequestModalLabel">Delete request</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="deleteRequestForm" method="post">
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this request?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-danger">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="renameRequestModal" tabindex="-1" role="dialog" aria-labelledby="renameRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="renameRequestModalLabel">Rename request</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="renameRequestForm" method="post" action="{{ url_for('rename_request') }}">
+                <div class="modal-body">
+                    <p>Change this request name.</p>
+                    <input type="hidden" id="renameRequestId" name="request_id">
+                    <div class="form-group">
+                        <!-- <label for="newRequestName">Nuovo Nome:</label> -->
+                        <input type="text" class="form-control" id="newRequestName" name="new_request_name" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-warning">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

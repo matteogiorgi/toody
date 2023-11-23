@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TooDY</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='toody-blue.svg') }}">
+    <style>
+        /* Personalizza la larghezza del contenitore per vari breakpoint */
+        /* Default 100% per dispositivi molto piccoli, rende il contenitore a larghezza piena */
+        .container {
+            max-width: 100%;
+        }
+        /* Larghezza personalizzata per dispositivi con schermo piccolo (>= 576px) */
+        @media (min-width: 576px) {
+            .container {
+                max-width: 95%;
+            }
+        }
+        /* Larghezza personalizzata per dispositivi con schermo medio (>= 768px) */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 90%;
+            }
+        }
+        /* Larghezza personalizzata per dispositivi con schermo grande (>= 992px) */
+        @media (min-width: 992px) {
+            .container {
+                max-width: 85%;
+            }
+        }
+        /* Larghezza personalizzata per dispositivi con schermo extra-grande (>= 1200px) */
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 80%;
+            }
+        }
+        .navbar-light.bg-light {
+            background-color: #f6f6f7 !important;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .resize-handler {
+            cursor: ns-resize;
+            height: 12px;
+            background: repeating-linear-gradient(
+                0deg,
+                #ccc,
+                #ccc 1px,
+                transparent 1px,
+                transparent 4px
+            );
+            margin-top: 16px;
+            margin-bottom: 16px;
+            width: 30px; /* Larghezza del handler */
+            margin-left: auto;
+            margin-right: auto;
+        }
+        a {
+            color: #3b88c3;
+        }
+        a:hover, a:focus {
+            color: #2a6b9b; /* Una tonalità leggermente più scura per gli stati hover/focus */
+            text-decoration: underline; /* Sottolinea il link quando ci passi sopra con il mouse o quando è selezionato */
+        }
+        .btn-primary {
+            background-color: #3b88c3 !important;
+            border-color: #3b88c3 !important;
+            color: #ffffff !important; /* Testo bianco per una buona leggibilità sullo sfondo blu */
+        }
+        .btn-primary:hover,
+        .btn-primary:focus,
+        .btn-primary:active {
+            background-color: #2a6b9b !important; /* Una tonalità leggermente più scura per gli stati hover/focus/active */
+            border-color: #2a6b9b !important;
+        }
+        .btn-outline-primary {
+            color: #3b88c3 !important; /* Colore del testo */
+            border-color: #3b88c3 !important; /* Colore del bordo */
+        }
+        .btn-outline-primary:hover,
+        .btn-outline-primary:focus,
+        .btn-outline-primary:active {
+            background-color: #3b88c3 !important; /* Sfondo al passaggio del mouse, focus o attivo */
+            color: #ffffff !important; /* Colore del testo al passaggio del mouse, focus o attivo */
+        }
+        /* Se desideri che il colore dello sfondo cambi anche quando il bottone è disabilitato: */
+        .btn-outline-primary.disabled,
+        .btn-outline-primary:disabled {
+            background-color: #3b88c3 !important;
+            color: #ffffff !important;
+        }
+        .btn-unregister {
+            color: #3b88c3;
+        }
+        .btn-unregister:hover, .btn-unregister:focus {
+            color: #2a6b9b;
+            text-decoration: underline;
+        }
+        .badge-primary {
+            background-color: #3b88c3 !important;
+            color: #ffffff !important;  /* Questo è un colore bianco tipico per il testo sui badge. Puoi modificarlo secondo le tue preferenze. */
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+        <a class="navbar-brand" href="{{ url_for('main') }}">
+            <!-- <img src="/static/toody-blue.svg" alt="Toody" height="30" class="d-inline-block align-top">ooDY -->
+            <img src="{{ url_for('static', filename='toody-blue.svg') }}" alt="TooDY Logo" style="height: 1.2em; vertical-align: middle; margin-bottom: 0.2em; margin-right: 0.1em;">ooDY
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('about') }}">About</a>
+                </li>
+                {% if not current_user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                </li>
+                {% else %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <strong>Hi {{ current_user.username }}</strong>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                        <!-- <form method="post" action="{{ url_for('unregister') }}" class="dropdown-item" onsubmit="return confirm('Sei sicuro di voler cancellare il tuo account? Questa azione non può essere annullata.');"> -->
+                        <!--     <button type="submit" class="btn btn-link btn-unregister p-0 m-0 align-baseline">Unregister</button> -->
+                        <!-- </form> -->
+                        <a class="dropdown-item" href="{{ url_for('new_backup_code') }}">New backup code</a>
+                        <a class="dropdown-item" href="{{ url_for('change_password') }}">Change password</a>
+                        <a href="#" class="dropdown-item" data-toggle="modal" data-target="#unregisterModal">Unregister</a>
+                        <a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a>
+                    </div>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+    <div class="container mt-5 pt-5">
+        <!-- Start of Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flashes">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <!-- End of Flash Messages -->
+        {% block content %}
+        {% endblock %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+
+    <!-- Heartbeat AJAX call -->
+    <script>
+        var isAuthenticated = {{ current_user.is_authenticated|tojson }};
+
+        // if (isAuthenticated) {
+        //     setInterval(function() {
+        //         fetch('/heartbeat')
+        //         .then(response => {
+        //             if (response.redirected) {
+        //                 window.location.href = response.url;
+        //             }
+        //         })
+        //         .catch(error => console.error('There was an error!', error));
+        //     }, 0.25 * 60 * 1000);
+        // }
+
+        if (isAuthenticated) {
+            setInterval(function() {
+                window.location.href = '/heartbeat';
+            }, 1 * 60 * 1000);
+        }
+    </script>
+
+    <!-- Unregister Modal -->
+    <div class="modal fade" id="unregisterModal" tabindex="-1" role="dialog" aria-labelledby="unregisterModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="unregisterModalLabel">Confirm Unregistration</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" action="{{ url_for('unregister') }}">
+                    <div class="modal-body">
+                        <p>Are you sure you want to unregister?</p>
+                        <div class="form-group">
+                            <!-- <label for="unregister-password">Password:</label> -->
+                            <input type="password" id="unregister-password" name="password" placeholder="Password" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-danger">Confirm</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

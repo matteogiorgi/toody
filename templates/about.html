@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row my-5">
+    <!-- Colonna di sinistra per l'icona e i pulsanti -->
+    <div class="col-lg-3">
+        <img src="{{ url_for('static', filename='toody-blue.svg') }}" alt="Toody Logo" style="width: 100%; height: auto; display: block;">
+
+        <!-- Pulsante per l'autore -->
+        <!-- <a href="https://www.example.com/author-link" class="btn btn-primary btn-block mt-2">Author</a> -->
+        <a href="https://www.example.com/author-link" class="btn btn-outline-primary btn-block mt-2">Author</a>
+
+        <!-- Pulsante per i sorgenti -->
+        <!-- <a href="https://github.com/your-repo-link" class="btn btn-secondary btn-block mt-2">Sources</a> -->
+        <a href="https://github.com/your-repo-link" class="btn btn-outline-secondary btn-block mt-2">Sources</a>
+    </div>
+
+    <!-- Colonna di destra per il titolo, sottotitolo e testo -->
+    <div class="col-lg-9">
+        <!-- <h1>TooDY</h1> -->
+        <!-- <h1>A new <img src="{{ url_for('static', filename='toody-blue.svg') }}" alt="TooDY Logo" style="height: 1.2em; vertical-align: middle; margin-bottom: 0.2em; margin-right: 0.1em;">ool for detecting variability</h1> -->
+        <h1>A new tool for detecting variability</h1>
+        <!-- <p class="lead"> -->
+        <!-- Il lavoro di tesi si colloca in una linea di ricerca per la specifica di linee di prodotto software (SPL) a partire da documenti di requisiti in linguaggio naturale. Le ambiguità in un documento dei requisiti normalmente causano incoerenze tra l'aspettativa del cliente e il prodotto sviluppato, e spesso portano a rielaborazioni indesiderate degli artefatti. Tuttavia, un termine ambiguo può anche essere usato come mezzo per rimandare una decisione. Sviluppando questa idea, abbiamo visto che il rilevamento dell'ambiguità può anche essere usato come un modo per catturare aspetti nascosti di variabilità nei requisiti. Inoltre abbiamo individuato altri indicatori specifici per la variabilità che non appartengono agli indicatori di ambiguità noti. -->
+        <!-- </p> -->
+        <p class="lead">
+            This application serves as a multi-functional platform designed primarily for text analysis. Users can sign up with a unique username and enjoy a range of features tailored for analyzing and manipulating textual content. After logging in, they are presented with a dashboard that lists their past requests and provides options for creating new ones.
+        </p>
+        <p class="lead">
+            One of the standout features is the ability to compare two sets of texts. With the help of a web-based ACE editor, users can input or upload their primary content, while a secondary text area is available for additional text input. The application then processes these requests, offering insights and statistics based on the provided content.
+        </p>
+        <p class="lead">
+            For security reasons, the platform incorporates features like password change and offers backup codes for account recovery. Users are also given the flexibility to rename or delete their requests, ensuring a customizable experience. The app is designed with a user-friendly interface, making text analysis an effortless task for everyone.
+        </p>
+    </div>
+</div>
+{% endblock %}
