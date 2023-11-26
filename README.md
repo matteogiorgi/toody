@@ -1,6 +1,5 @@
 # TooDY, a new Tool for Detecting variabilitY
-![](pagina1-welcome.png)\
-![](pagina1-lista.png)
+![](pagina1-welcome.png)
 
 
 ## Project Description
@@ -8,7 +7,7 @@
 
 
 ## Dependencies and Local Deployment
-In order to run the application locally, you'll need to install the required dependencies and libraries. Clone this repository first and navigate to the project directory:
+In order to execute the application locally, you'll need to install the required dependencies and libraries. Clone this repository first and navigate to the project directory:
 ```bash
 git clone https://github.com/matteogiorgi/toody
 cd toody
@@ -20,18 +19,18 @@ cd toody
 - *Flask* web framework
 
 ### Required Libraries
-The application depends on several *Python* libraries, including:
-- **_spaCy_**: for natural language processing.
-- **_Flask_**: a lightweight WYSIWYG web application framework.
-- **_Flask-Login_**: for managing user sessions.
-- **_Flask-SQLAlchemy_**: an ORM for *Flask* applications.
-- **_Werkzeug_**: for password hashing and authentication.
-- **_APScheduler_**: for scheduling background jobs.
-- **_python-slugify_**: for generating slugs from strings.
-- **_Pytz_**: for timezone calculations.
+The application is written in *Python* and depends on several *Python* libraries, including:
+- **spaCy**: for natural language processing.
+- **Flask**: a lightweight WYSIWYG web application framework.
+- **Flask-Login**: for managing user sessions.
+- **Flask-SQLAlchemy**: an ORM for *Flask* applications.
+- **Werkzeug**: for password hashing and authentication.
+- **APScheduler**: for scheduling background jobs.
+- **python-slugify**: for generating slugs from strings.
+- **Pytz**: for timezone calculations.
 
 ### Installing Dependencies
-To install the required *Python* libraries, run the following command:
+To install the required *Python* libraries, first make shure you have [*Python*](https://www.python.org/downloads/) and [*pip*](https://pip.pypa.io/en/stable/getting-started/) installed. Then, run the following command:
 ```bash
 pip install spacy flask flask_login flask_sqlalchemy werkzeug apscheduler python-slugify pytz
 ```
@@ -47,6 +46,18 @@ To start the *Flask* server on your local machine, navigate to the project direc
 ```bash
 python app.py
 ```
+
+![](pagina1-lista.png)
+
+
+## Additional Information
+
+### Academic Significance
+This project has been developed as the final project for the Bachelor's thesis in Computer Science at the *University of Pisa*. The thesis demonstrates the application of advanced concepts in natural language processing and software development, contributing to the field of software product lines and requirement analysis.
+
+### Accessing the Dissertation and Application
+- **Dissertation**: For an in-depth understanding of the theoretical background and the methodologies adopted in this project, you can access the dissertation at [this link](https://github.com/matteogiorgi/toody-dissertation).
+- **Live Application**: To see the web application in action, visit [matteogiorgi.pythonanywhere.com](https://matteogiorgi.pythonanywhere.com/).
 
 
 ## License
