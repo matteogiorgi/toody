@@ -3,7 +3,11 @@
 
 
 ## Project Description
-*TooDY* is a natural language processing tool designed to identify variability indicators in requirement documents. It leverages lexical and syntactic analysis and is built upon the *spaCy* library. This tool situates itself in the research line of specifying software product lines (*SPL*) from natural language requirement documents. Ambiguities in requirement documents often lead to inconsistencies between client expectations and the developed product, resulting in undesirable rework of artifacts. However, ambiguity can also be a means to defer decisions. Building on this concept, it has been shown that ambiguity detection can also serve as a way to capture hidden aspects of variability in requirements, utilizing specific variability indicators that differ from known ambiguity indicators.
+*TooDY* is a natural language processing tool designed to identify variability indicators in requirement documents. It leverages lexical and syntactic analysis and is built upon the *spaCy* library.
+
+This tool situates itself in the research line of specifying software product lines (*SPL*) from natural language requirement documents. Ambiguities in requirement documents often lead to inconsistencies between client expectations and the developed product, resulting in undesirable rework of artifacts. However, ambiguity can also be a means to defer decisions.
+
+Building on this concept, it has been shown that ambiguity detection can also serve as a way to capture hidden aspects of variability in requirements, utilizing specific variability indicators that differ from known ambiguity indicators.
 
 
 ## Dependencies and Local Deployment
