@@ -19,14 +19,14 @@ cd toody
 
 ### Required Libraries
 The application is written in *Python* and depends on several *Python* libraries, including:
-- **spaCy**: for natural language processing.
-- **Flask**: a lightweight WYSIWYG web application framework.
-- **Flask-Login**: for managing user sessions.
-- **Flask-SQLAlchemy**: an ORM for *Flask* applications.
-- **Werkzeug**: for password hashing and authentication.
-- **APScheduler**: for scheduling background jobs.
-- **python-slugify**: for generating slugs from strings.
-- **Pytz**: for timezone calculations.
+- **spaCy** for natural language processing.
+- **Flask** a lightweight WYSIWYG web application framework.
+- **Flask-Login** for managing user sessions.
+- **Flask-SQLAlchemy** an ORM for *Flask* applications.
+- **Werkzeug** for password hashing and authentication.
+- **APScheduler** for scheduling background jobs.
+- **python-slugify** for generating slugs from strings.
+- **Pytz** for timezone calculations.
 
 ### Installing Dependencies
 To install the required dependencies, first make shure you have [*Python*](https://www.python.org/downloads/) and [*pip*](https://pip.pypa.io/en/stable/getting-started/) installed. Then, run the following command:
