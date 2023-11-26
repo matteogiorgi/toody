@@ -11,10 +11,9 @@ Building on this concept, it has been shown that ambiguity detection can also se
 
 
 ## Dependencies and Local Deployment
-In order to execute the application locally, you'll need to install the required dependencies and libraries. Clone this repository first and navigate to the project directory:
+In order to execute the application locally, you'll need to install the required dependencies and libraries. Clone this repository first:
 ```bash
 git clone https://github.com/matteogiorgi/toody
-cd toody
 ```
 
 ### Required Libraries
@@ -31,7 +30,9 @@ The application is written in *Python* and depends on several *Python* libraries
 ### Installing Dependencies
 To install the required dependencies, first make shure you have [*Python*](https://www.python.org/downloads/) and [*pip*](https://pip.pypa.io/en/stable/getting-started/) installed. Then, run the following command:
 ```bash
-pip install spacy flask flask_login flask_sqlalchemy werkzeug apscheduler python-slugify pytz
+pip install flask flask_login flask_sqlalchemy werkzeug apscheduler python-slugify pytz
+pip install -U pip setuptools wheel
+pip install -U spacy
 ```
 
 ### Setting up spaCy
@@ -55,7 +56,7 @@ python app.py
 This project has been developed as the final project for the Bachelor's thesis in Computer Science at the *University of Pisa*. The thesis demonstrates the application of natural language processing techniques and delivers a tool for detecting variability indicators in requirement documents.
 
 - **Dissertation**: for an in-depth understanding of the theoretical background and the methodologies adopted in this project, you can access the dissertation at [this link](https://github.com/matteogiorgi/toody-dissertation).
-- **Live Application**: to see the web application in action, visit [matteogiorgi.pythonanywhere.com](https://matteogiorgi.pythonanywhere.com/).
+- **Live Application**: to see the web application in action, visit [toody.pythonanywhere.com](https://toody.pythonanywhere.com/).
 
 
 ## License
