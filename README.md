@@ -13,11 +13,6 @@ git clone https://github.com/matteogiorgi/toody
 cd toody
 ```
 
-### Prerequisites
-- *Python 3.x* language
-- *spaCy* library for *NLP*
-- *Flask* web framework
-
 ### Required Libraries
 The application is written in *Python* and depends on several *Python* libraries, including:
 - **spaCy**: for natural language processing.
@@ -30,7 +25,7 @@ The application is written in *Python* and depends on several *Python* libraries
 - **Pytz**: for timezone calculations.
 
 ### Installing Dependencies
-To install the required *Python* libraries, first make shure you have [*Python*](https://www.python.org/downloads/) and [*pip*](https://pip.pypa.io/en/stable/getting-started/) installed. Then, run the following command:
+To install the required dependencies, first make shure you have [*Python*](https://www.python.org/downloads/) and [*pip*](https://pip.pypa.io/en/stable/getting-started/) installed. Then, run the following command:
 ```bash
 pip install spacy flask flask_login flask_sqlalchemy werkzeug apscheduler python-slugify pytz
 ```
@@ -47,18 +42,17 @@ To start the *Flask* server on your local machine, navigate to the project direc
 python app.py
 ```
 
-![](pagina1-lista.png)
-
 
 ## Additional Information
 
-### Academic Significance
-This project has been developed as the final project for the Bachelor's thesis in Computer Science at the *University of Pisa*. The thesis demonstrates the application of advanced concepts in natural language processing and software development, contributing to the field of software product lines and requirement analysis.
+![](pagina1-lista.png)
 
-### Accessing the Dissertation and Application
-- **Dissertation**: For an in-depth understanding of the theoretical background and the methodologies adopted in this project, you can access the dissertation at [this link](https://github.com/matteogiorgi/toody-dissertation).
-- **Live Application**: To see the web application in action, visit [matteogiorgi.pythonanywhere.com](https://matteogiorgi.pythonanywhere.com/).
+### Academic Significance
+This project has been developed as the final project for the Bachelor's thesis in Computer Science at the *University of Pisa*. The thesis demonstrates the application of natural language processing techniques and delivers a tool for detecting variability indicators in requirement documents.
+
+- **Dissertation**: for an in-depth understanding of the theoretical background and the methodologies adopted in this project, you can access the dissertation at [this link](https://github.com/matteogiorgi/toody-dissertation).
+- **Live Application**: to see the web application in action, visit [matteogiorgi.pythonanywhere.com](https://matteogiorgi.pythonanywhere.com/).
 
 
 ## License
-This project is licensed under the *GPL-3.0 license* - see the `LICENSE` file for details.
+This project is licensed under the *GPL-3.0 license* - see the [`LICENSE`](LICENSE) file for details.
